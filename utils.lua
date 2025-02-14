@@ -28,18 +28,32 @@ function M.drawTextCentered(text, font, yOffset)
 end
 
 function M.calculateBounce(ball, paddle)
-    -- How far from the center of the paddle did the ball hit? (-1 to 1)
-    local relativeIntersectY = (paddle.y + paddle.h / 2) - (ball.y + ball.h / 2)
-    -- turn the ball's distance from paddle center into a percentage, middle is 0%, edges are 100%
-    local normalized = relativeIntersectY / (paddle.h / 2)
+    --returns  a table with proper dx and dy to apply
+    local table = {}
+    -- How far from the center of the paddle did the ball hit? (from -50 to 50)
+    local relativeIntersectX = (ball.x + ball.w / 2) - (paddle.x + paddle.w / 2)
+    -- turn the ball's distance from paddle center into a percentage, middle is 100%, edges are 0%
+    local normalized = 1 - (relativeIntersectX / (paddle.w / 2))^2
 
-    -- Max bounce angle (radians) — 75 degrees for more dynamic gameplay
-    local maxBounceAngle = math.rad(50)
+    -- Max bounce angle to base on.
+    local maxBounceAngle = math.rad(90)
 
-    -- Final bounce angle based on where the ball hit
-    local bounceAngle = normalized * maxBounceAngle
+    -- limit min and max angles to 30 and 80
+    local bounceAngle = math.min(math.rad(80), math.max(math.rad(30), (normalized * maxBounceAngle)))
 
-    return bounceAngle
+    -- turn the dx cos into a negative or positive (since we are not using angles over 90 for negative values)
+    if relativeIntersectX > 0 then
+        table.dx = math.cos(bounceAngle)
+    else
+        table.dx = -math.cos(bounceAngle)
+    end
+
+    -- return the dy sin of the current angle
+    table.dy = -math.sin(bounceAngle)
+
+    return table
+    
+    
 end
 
 return M
