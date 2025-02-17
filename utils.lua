@@ -21,10 +21,10 @@ function M.magnitude(dx,dy)
 end
 
 --print text centered with given font and y-height
-function M.drawTextCentered(text, font, yOffset)
+function M.drawTextCentered(text, font, yHeight)
     love.graphics.setFont(font)
     local width = font:getWidth(text)
-    love.graphics.print(text, (WINDOW_WIDTH - width) / 2, yOffset)
+    love.graphics.print(text, (WINDOW_WIDTH - width) / 2, yHeight)
 end
 
 function M.calculateBounce(ball, paddle)
@@ -51,9 +51,7 @@ function M.calculateBounce(ball, paddle)
     -- return the dy sin of the current angle
     table.dy = -math.sin(bounceAngle)
 
-    return table
-    
-    
+    return table 
 end
 
 return M

@@ -1,9 +1,6 @@
 local love = require "love"
 local utils = require "utils"
 
-
-
-
 -- resources
 local h1 = love.graphics.newFont("fonts/NotJamChunkySans.ttf",48)
 local h2 = love.graphics.newFont("fonts/NotJamChunkySans.ttf",18)
@@ -27,41 +24,29 @@ local function createButton(x, y, w, h, text, textColor, buttonColor)
         mode = "fill",
         textWidth = h2:getWidth(text),
         textHeight = h2:getAscent() - h2:getDescent(),
-        -- isHovered = false,
         isSelected = false,
-        -- update = function(self, dt, mouseX, mouseY)
-        --     self.isHovered = mouseX > self.x and mouseX < self.x + self.w and mouseY > self.y and mouseY < self.y + self.h
-        -- end,
+
         draw = function(self)
             love.graphics.setFont(h2)
-            if self.isHovered or self.isSelected then
+            if self.isSelected then
                 love.graphics.setColor(buttonColor[1],buttonColor[2],buttonColor[3])
                 love.graphics.rectangle(self.mode, self.x, self.y, self.w, self.h)
                 love.graphics.setColor(textColor[1],textColor[2],textColor[3])
                 love.graphics.print(self.text, self.x + self.w/2 - self.textWidth/2, self.y + self.h/2 - self.textHeight/2)
             else
-
                 love.graphics.setColor(buttonColor[1],buttonColor[2],buttonColor[3])
                 love.graphics.rectangle("line", self.x, self.y, self.w, self.h)
                 love.graphics.setColor(buttonColor[1],buttonColor[2],buttonColor[3])
                 love.graphics.print(self.text, self.x + self.w/2 - self.textWidth/2, self.y + self.h/2 - self.textHeight/2)
-
             end
-
         end,
     }
 end
 
 local button1 = createButton(WINDOW_WIDTH/2, 250, 200, 50, "Play", {0,0,0}, {1,1,1})
 
-
-
 --variables
 local gameState = "menu"
-
-
-
-
 
 local ball = {
     x = 0,
@@ -138,6 +123,8 @@ local paddle_obj = {
 }
 local paddle = createPaddle(1, WINDOW_WIDTH/2-paddle_obj.w/2, 560, paddle_obj.w, paddle_obj.h)
 
+
+-- functions
 local function resetPositions()
     paddle.x = WINDOW_WIDTH/2-paddle.w/2 --re-center the paddle
     ball.x = ball:DEFAULT_X() --re-center ball x
