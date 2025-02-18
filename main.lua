@@ -1,5 +1,8 @@
 local love = require "love"
 local utils = require "utils"
+local debugging = require "debugging"
+
+local Block = require("block")  -- Import the block module
 
 -- resources
 local h1 = love.graphics.newFont("fonts/NotJamChunkySans.ttf",48)
@@ -110,7 +113,7 @@ local function createPaddle(id, x, y, w, h)
         draw = function(self)
             love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
         end,
-        update = function(self, dt, ball)
+        update = function(self, dt)
             --paddle movement, with max a min stoppers for left and right edge of screen.
             self.x = math.max(0, math.min(WINDOW_WIDTH - self.w, self.x + self.speed * self.dx * dt))
         end
@@ -138,21 +141,57 @@ local function resetPositions()
 end
 
 
+-- Table mapping collision sides to position update functions (defined once)
+local collisionActions = {
+    right = function(ball, block)
+        ball.x = block.x + block.w + 1
+        ball.dx = -ball.dx
+    end,
+    left = function(ball, block)
+        ball.x = block.x - ball.w - 1
+        ball.dx = -ball.dx
+    end,
+    top = function(ball, block)
+        ball.y = block.y - ball.h
+        ball.dy = -ball.dy
+    end,
+    bottom = function(ball, block)
+        ball.y = block.y + block.h
+        ball.dy = -ball.dy
+    end
+}
+
+local function handleCollision(ball, block)
+    local side = utils.getCollisionSide(ball, block)
+    if collisionActions[side] then
+        collisionActions[side](ball, block)
+    end
+    block.visible = false
+end
+
+
+-- Instantiate blocks with config table and store the result in a variable
+local level1 = {columns = 10, rows = 5, startY = 150}
+local blocks = Block.instantiateBlocks(level1)
+
+
 function love.load ()
     love.math.setRandomSeed(os.time() + love.timer.getTime())
     love.graphics.setDefaultFilter('nearest', 'nearest')
     love.graphics.setFont(h1)
     button1.isSelected = true
-    
-
 end
 
 function love.update(dt)
+    local mouseX, mouseY = love.mouse.getPosition()
     if gameState == "play" then
-        --player1
-        paddle.dx = (love.keyboard.isDown('left') and -1) or (love.keyboard.isDown('right') and 1) or 0
 
-        paddle:update(dt,ball)
+        --paddle movement
+        -- paddle.dx = (love.keyboard.isDown('left') and -1) or (love.keyboard.isDown('right') and 1) or 0
+
+        paddle.x = mouseX-paddle.w/2
+
+        paddle:update(dt)
         ball:update(dt)
 
         if utils.checkCollision(paddle, ball) then
@@ -164,7 +203,16 @@ function love.update(dt)
             -- ball.speed = ball.speed * 1.05 -- Gradual speed increase
         end
 
-
+        for r, row in ipairs(blocks) do
+            for c, block in ipairs(row) do
+                if utils.checkCollision(ball, block) and block.visible then
+                    handleCollision(ball, block)
+                    --play sound
+                    blip:play()
+                end
+            end
+        end
+        
         if ball.y >= WINDOW_HEIGHT-ball.h then
             gameover:play()
 
@@ -172,32 +220,36 @@ function love.update(dt)
             ball.dx = -1
             resetPositions()
         end
+
     elseif gameState == "menu" then
-        local mouseX, mouseY = love.mouse.getPosition()
         -- button1:update(dt, mouseX, mouseY)
         -- button2:update(dt, mouseX, mouseY)
-
     end
 
 end
 
 function love.draw()
     love.graphics.setColor(1,1,1)
+
+    -- Drawing blocks
+    for r, row in ipairs(blocks) do
+        for c, block in ipairs(row) do
+            if block.visible then
+                block:draw()
+            end
+        end
+    end
     
     if gameState == "play" or gameState == "paused" then
-        
-
         if gameState == "paused" then
             utils.drawTextCentered("Press Enter to Play",h2,WINDOW_HEIGHT*0.2)
         end
-
         paddle:draw()
         ball:draw()
-        
-
         --fps debugging
         -- love.graphics.print("dx : "..ball.dx,80)
         -- love.graphics.print(love.timer.getFPS())
+
     elseif gameState == "menu" then
         utils.drawTextCentered("Breakout",h1,WINDOW_HEIGHT*0.1)
         button1:draw()
@@ -210,16 +262,16 @@ function love.keypressed(key, unicode)
             love.event.quit()
         else
             gameState = "menu"
-
         end
 	end
+    
     if key == "return" then
         if gameState == "paused" then
             gameState = "play"
         end
     end
-    if gameState == "menu" then 
 
+    if gameState == "menu" then 
         if key == "return" and button1.isSelected then
             ball.dx = utils.randomDirection()
             resetPositions()
@@ -227,3 +279,13 @@ function love.keypressed(key, unicode)
         end
     end
 end
+
+function love.mousepressed( x, y, button, istouch, presses)
+    if button == 1 then
+        if gameState == "paused" then
+            gameState = "play"
+        end
+    end
+end
+
+

@@ -10,6 +10,19 @@ function M.checkCollision(a, b)
            a.y + a.h > b.y
 end
 
+function M.getCollisionSide(A, B)
+    local overlapX = math.min(A.x + A.w - B.x, B.x + B.w - A.x)
+    local overlapY = math.min(A.y + A.h - B.y, B.y + B.h - A.y)
+
+    if overlapX < overlapY then
+        return (A.x < B.x) and "left" or "right"
+    else
+        return (A.y < B.y) and "top" or "bottom"
+    end
+end
+
+
+
 --randomly return -1 or 1
 function M.randomDirection()
     return love.math.random(0, 1) == 0 and -1 or 1
