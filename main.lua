@@ -2,142 +2,72 @@ local love = require "love"
 local utils = require "utils"
 local debugging = require "debugging"
 
-local Block = require("block")  -- Import the block module
+local Button = require("modules/button")
+local Ball = require("modules/ball")
+local Paddle = require("modules/paddle")
+local Block = require("modules/block")  -- Import the block module
 
--- resources
-local h1 = love.graphics.newFont("fonts/NotJamChunkySans.ttf",48)
-local h2 = love.graphics.newFont("fonts/NotJamChunkySans.ttf",18)
-local blop = love.audio.newSource("sounds/blop.mp3", "static")
-local blip = love.audio.newSource("sounds/blip.mp3", "static")
-local gameover = love.audio.newSource("sounds/gameover.wav", "static")
+--Globals
+    WINDOW_WIDTH = love.graphics.getWidth()
+    WINDOW_HEIGHT = love.graphics.getHeight()
+    H1 = love.graphics.newFont("fonts/NotJamChunkySans.ttf",48)
+    H2 = love.graphics.newFont("fonts/NotJamChunkySans.ttf",18)
 
---constants
-WINDOW_WIDTH = love.graphics.getWidth()
-WINDOW_HEIGHT = love.graphics.getHeight()
+    --Audio
+    BLOP = love.audio.newSource("sounds/BLOP.mp3", "static")
+    BLIP = love.audio.newSource("sounds/BLIP.mp3", "static")
+    GAMEOVER = love.audio.newSource("sounds/GAMEOVER.wav", "static")
+    GAMEOVER:setVolume(0.1)
+    BLIP:setVolume(0.1)
+    BLOP:setVolume(0.1)
 
-local function createButton(x, y, w, h, text, textColor, buttonColor)
-    return {
-        text = text,
-        w = w,
-        h = h,
-        x = x-w/2,
-        y = y,
-        textColor = textColor,
-        buttonColor = buttonColor,
-        mode = "fill",
-        textWidth = h2:getWidth(text),
-        textHeight = h2:getAscent() - h2:getDescent(),
-        isSelected = false,
 
-        draw = function(self)
-            love.graphics.setFont(h2)
-            if self.isSelected then
-                love.graphics.setColor(buttonColor[1],buttonColor[2],buttonColor[3])
-                love.graphics.rectangle(self.mode, self.x, self.y, self.w, self.h)
-                love.graphics.setColor(textColor[1],textColor[2],textColor[3])
-                love.graphics.print(self.text, self.x + self.w/2 - self.textWidth/2, self.y + self.h/2 - self.textHeight/2)
-            else
-                love.graphics.setColor(buttonColor[1],buttonColor[2],buttonColor[3])
-                love.graphics.rectangle("line", self.x, self.y, self.w, self.h)
-                love.graphics.setColor(buttonColor[1],buttonColor[2],buttonColor[3])
-                love.graphics.print(self.text, self.x + self.w/2 - self.textWidth/2, self.y + self.h/2 - self.textHeight/2)
-            end
-        end,
-    }
-end
-
-local button1 = createButton(WINDOW_WIDTH/2, 250, 200, 50, "Play", {0,0,0}, {1,1,1})
-
---variables
+--Game objects
 local gameState = "menu"
+local score = 0
+local lives = 3
 
-local ball = {
-    x = 0,
-    y = 0,
-    w = 20,
-    h = 20,
-    dx = 1,
-    dy = -1,
-    speed = 400,
-
-    DEFAULT_X = function(self)
-        return WINDOW_WIDTH/2-self.w/2
-    end,
-
-    DEFAULT_Y = function(self)
-        return 560-self.h-5
-    end,
-
-    draw = function(self)
-        love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
-    end,
-
-    update = function(self, dt)
-        --if the ball touches the left or right, reverse X direction.
-        if self.x <= 0 then
-            blip:play()
-            self.x = 0
-            self.dx = -self.dx
-        end
-
-        if self.x >= (WINDOW_WIDTH - self.w) then
-            blip:play()
-            self.x = WINDOW_WIDTH - self.w
-            self.dx = -self.dx
-        end
-
-        --if the ball touches the top, reverse Y direction.
-        if self.y <= 0 then
-            blip:play()
-            self.y = 0
-            self.dy = -self.dy
-        end
-
-        --ball movement
-        self.x = self.x + self.speed * self.dx * dt
-        self.y = self.y + self.speed * self.dy * dt
-    end
+local buttons = {
+    current = 1,
+    Button:new(WINDOW_WIDTH/2, 250, 200, 50, "Play", {0,0,0}, {1,1,1}),
+    Button:new(WINDOW_WIDTH/2, 350, 200, 50, "Pay", {0,0,0}, {1,1,1}),
+    Button:new(WINDOW_WIDTH/2, 450, 200, 50, "Py", {0,0,0}, {1,1,1}),
 }
+buttons[buttons.current].isSelected = true
 
-local function createPaddle(id, x, y, w, h)
-    return {
-        id = id,
-        w = w,
-        h = h,
-        x = x,
-        y = y, 
-        speed = 600,
-        dx = 0,
-        reactionTime = 0.4,
-        timer = 0,
-        draw = function(self)
-            love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
-        end,
-        update = function(self, dt)
-            --paddle movement, with max a min stoppers for left and right edge of screen.
-            self.x = math.max(0, math.min(WINDOW_WIDTH - self.w, self.x + self.speed * self.dx * dt))
-        end
-    }
-end
+local ball = Ball:new()
+local paddle = Paddle:new(100, 20)
 
-local paddle_obj = {
-    w = 100,
-    h = 20
-}
-local paddle = createPaddle(1, WINDOW_WIDTH/2-paddle_obj.w/2, 560, paddle_obj.w, paddle_obj.h)
-
+-- Instantiate blocks with config table and store the result in a variable
+local level1 = {columns = 10, rows = 5, startY = 150}
+local blocks = Block.instantiateBlocks(level1)
 
 -- functions
+local function cycleSelection(direction)
+    -- Deselect current button
+    buttons[buttons.current].isSelected = false
+    -- Update index and wrap around
+    buttons.current = (buttons.current - 1 + direction) % #buttons + 1
+    -- Select new button
+    buttons[buttons.current].isSelected = true
+end
+
 local function resetPositions()
-    paddle.x = WINDOW_WIDTH/2-paddle.w/2 --re-center the paddle
-    ball.x = ball:DEFAULT_X() --re-center ball x
-    ball.y = ball:DEFAULT_Y() --re-center ball y
+    -- paddle.x = paddle:DEFAULT_X()
+    -- ball.x = ball:DEFAULT_X() --re-center ball x
+    -- ball.y = ball:DEFAULT_Y() --re-center ball y
+    ball.speed = ball.DEFAULT_SPEED
 
     local angle = math.rad(love.math.random(45, 135)) -- Random angle to shoot ball from
     ball.dx = math.cos(angle)
     ball.dy = -math.sin(angle)
+end
 
-    ball.speed = 400
+local function resetGame()
+    resetPositions()
+    score = 0
+    lives = 3
+    blocks = Block.instantiateBlocks(level1)
 end
 
 
@@ -170,32 +100,30 @@ local function handleCollision(ball, block)
 end
 
 
--- Instantiate blocks with config table and store the result in a variable
-local level1 = {columns = 10, rows = 5, startY = 150}
-local blocks = Block.instantiateBlocks(level1)
+
 
 
 function love.load ()
     love.math.setRandomSeed(os.time() + love.timer.getTime())
     love.graphics.setDefaultFilter('nearest', 'nearest')
-    love.graphics.setFont(h1)
-    button1.isSelected = true
+    love.graphics.setFont(H1)
 end
 
 function love.update(dt)
     local mouseX, mouseY = love.mouse.getPosition()
+
     if gameState == "play" then
 
-        --paddle movement
+        -- paddle movement
         -- paddle.dx = (love.keyboard.isDown('left') and -1) or (love.keyboard.isDown('right') and 1) or 0
 
         paddle.x = mouseX-paddle.w/2
-
         paddle:update(dt)
         ball:update(dt)
 
+        --if paddle/ball collision
         if utils.checkCollision(paddle, ball) then
-            blop:play()
+            BLOP:play()
             local angle = utils.calculateBounce(ball, paddle)
             ball.dy = angle.dy
             ball.dx = angle.dx
@@ -203,89 +131,152 @@ function love.update(dt)
             -- ball.speed = ball.speed * 1.05 -- Gradual speed increase
         end
 
+        --if ball/block collision
         for r, row in ipairs(blocks) do
             for c, block in ipairs(row) do
                 if utils.checkCollision(ball, block) and block.visible then
                     handleCollision(ball, block)
                     --play sound
-                    blip:play()
+                    local soundInstance = BLIP:clone()
+                    soundInstance:play()
+
+                    score = score + 1
                 end
             end
         end
         
+        --loss consequence
         if ball.y >= WINDOW_HEIGHT-ball.h then
-            gameover:play()
-
+            GAMEOVER:play()
+            lives = lives-1
             gameState = "paused"
-            ball.dx = -1
             resetPositions()
+            if lives == -1 then
+                gameState = "menu"
+                love.mouse.setVisible(true)
+                
+            end
         end
-
-    elseif gameState == "menu" then
-        -- button1:update(dt, mouseX, mouseY)
-        -- button2:update(dt, mouseX, mouseY)
+    elseif gameState=="paused" then
+        paddle.x = mouseX-paddle.w/2
+        ball.y = ball:DEFAULT_Y() --re-center ball y
+        ball.x = paddle.x+paddle.w/2-ball.w/2
+        paddle:update(dt)
     end
-
 end
 
 function love.draw()
     love.graphics.setColor(1,1,1)
 
-    -- Drawing blocks
-    for r, row in ipairs(blocks) do
-        for c, block in ipairs(row) do
-            if block.visible then
-                block:draw()
-            end
-        end
-    end
+    --fps debugging
+    -- love.graphics.print(love.timer.getFPS())
     
     if gameState == "play" or gameState == "paused" then
         if gameState == "paused" then
-            utils.drawTextCentered("Press Enter to Play",h2,WINDOW_HEIGHT*0.2)
+            utils.drawTextCentered("Click or press Enter to Play",H2,WINDOW_HEIGHT*0.2)
         end
-        paddle:draw()
-        ball:draw()
-        --fps debugging
-        -- love.graphics.print("dx : "..ball.dx,80)
-        -- love.graphics.print(love.timer.getFPS())
+        
+        love.graphics.setFont(H2)
+        love.graphics.print("Score "..score, 50, 50)
+        love.graphics.print("Balls ", 550, 50)
+        for i=1, lives do
+            love.graphics.rectangle("fill", 650 + 25*i, 50, 20, 20)
+        end
+        love.graphics.setFont(H1)
+
+        --draw paddle, ball, and block grid
+        paddle:draw() --paddle
+        ball:draw() --ball
+        for r, row in ipairs(blocks) do --blocks
+            for c, block in ipairs(row) do
+                if block.visible then
+                    block:draw()
+                end
+            end
+        end
+
 
     elseif gameState == "menu" then
-        utils.drawTextCentered("Breakout",h1,WINDOW_HEIGHT*0.1)
-        button1:draw()
+        utils.drawTextCentered("Breakout",H1,WINDOW_HEIGHT*0.1)
+        for _, button in ipairs(buttons) do
+            button:draw()
+        end
     end
 end
+
+
 
 function love.keypressed(key, unicode)
-	if key == "escape" then
-		if gameState == "menu" then
-            love.event.quit()
-        else
-            gameState = "menu"
-        end
-	end
-    
-    if key == "return" then
-        if gameState == "paused" then
-            gameState = "play"
-        end
-    end
-
-    if gameState == "menu" then 
-        if key == "return" and button1.isSelected then
-            ball.dx = utils.randomDirection()
-            resetPositions()
+    if gameState == "menu" then
+        if key == "return" and buttons[1].isSelected then
+            resetGame()
+            love.mouse.setVisible(false)
             gameState = "paused"
+        elseif key =="escape" then
+            love.event.quit()
+        elseif key =="up" then
+            cycleSelection(-1)
+            --play sound
+            local soundInstance = BLOP:clone()
+            soundInstance:play()
+
+        elseif key=="down" then
+            cycleSelection(1)
+            --play sound
+            local soundInstance = BLOP:clone()
+            soundInstance:play()
         end
-    end
+
+    elseif gameState == "play" then
+        if key == "return" then
+            elseif key == "escape" then
+                gameState = "menu"
+                love.mouse.setVisible(true)
+            end
+
+    elseif gameState == "paused" then
+        if key == "return" then
+             gameState = "play"
+        elseif key == "escape" then
+            gameState = "menu"
+            love.mouse.setVisible(true)
+        end
+
+    end 
+
 end
+
 
 function love.mousepressed( x, y, button, istouch, presses)
     if button == 1 then
         if gameState == "paused" then
             gameState = "play"
+        elseif gameState =="menu" and buttons[1].isSelected then
+            resetGame()
+            love.mouse.setVisible(false)
+            gameState = "paused"     
         end
     end
 end
 
-
+function love.mousemoved(mx, my, dx, dy)
+    if gameState == "menu" then
+        for i, button in ipairs(buttons) do
+            --for each button, check if mouse is hovering over it
+            if utils.isMouseHovering(button, mx, my) then
+                --if it is hovering a button, and that button isn't selected, switch it to selected.
+                if not buttons[i].isSelected then
+                    
+                    buttons[buttons.current].isSelected = false
+                    -- Update the selected one.
+                    buttons.current = i
+                    -- Select new button
+                    buttons[buttons.current].isSelected = true
+                    --play sound
+                    local soundInstance = BLOP:clone()
+                    soundInstance:play()
+                end
+            end
+        end
+    end
+end

@@ -21,6 +21,11 @@ function M.getCollisionSide(A, B)
     end
 end
 
+function M.isMouseHovering(button, mx, my)
+    return mx >= button.x and mx <= button.x + button.w and
+           my >= button.y and my <= button.y + button.h
+end
+
 
 
 --randomly return -1 or 1

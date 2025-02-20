@@ -1,3 +1,5 @@
+local love = require "love"
+
 -- block.lua
 local Block = {}
 
