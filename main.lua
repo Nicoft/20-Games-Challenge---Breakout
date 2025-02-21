@@ -160,7 +160,7 @@ function love.update(dt)
     elseif gameState=="paused" then
         paddle.x = mouseX-paddle.w/2
         ball.y = ball:DEFAULT_Y() --re-center ball y
-        ball.x = paddle.x+paddle.w/2-ball.w/2
+        ball.x = math.max(paddle.w/2 - ball.w/2, math.min(WINDOW_WIDTH - paddle.w/2 - ball.w/2, paddle.x + paddle.w/2 - ball.w/2))
         paddle:update(dt)
     end
 end
