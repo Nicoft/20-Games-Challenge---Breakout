@@ -72,4 +72,14 @@ function M.calculateBounce(ball, paddle)
     return table 
 end
 
+function M.resetBall(ball)
+        -- paddle.x = paddle:DEFAULT_X()
+    -- ball.x = ball:DEFAULT_X() --re-center ball x
+    -- ball.y = ball:DEFAULT_Y() --re-center ball y
+    ball.speed = ball.DEFAULT_SPEED
+    local angle = math.rad(love.math.random(45, 135)) -- Random angle to shoot ball from
+    ball.dx = math.cos(angle)
+    ball.dy = -math.sin(angle)
+end
+
 return M
