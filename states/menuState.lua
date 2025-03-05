@@ -29,6 +29,10 @@ function menuState:enter(gameObjects)
     --make sure a button is selected
     self.selected = gameObjects.menu.selected or 1  -- Ensure default selection
     self.buttons[self.selected].isSelected = true
+
+    self.gameObjects.lives = 3
+    self.gameObjects.currentLevel = 1
+    self.gameObjects.score = 0
 end
 
 function menuState:update(dt)
@@ -46,7 +50,7 @@ end
 
 function menuState:keypressed(key)
     if key == "return" and self.buttons[1].isSelected then
-        resetGame()
+
         love.mouse.setVisible(false)
         gStateMachine.change("paused", self.gameObjects)
     elseif key =="escape" then

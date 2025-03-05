@@ -10,8 +10,8 @@ function Ball:new()
         h = 20,
         dx = 1,
         dy = -1,
-        speed = 400,
-        DEFAULT_SPEED = 400,
+        speed = 500,
+        DEFAULT_SPEED = 500,
     
         DEFAULT_X = function(self)
             return WINDOW_WIDTH/2-self.w/2

@@ -35,7 +35,6 @@ local function handleCollision(ball, block)
     if collisionActions[side] then
         collisionActions[side](ball, block)
     end
-    block.visible = false
 end
 
 
@@ -48,7 +47,7 @@ function playState:update(dt)
     self.gameObjects.ball:update(dt)
 
     --if paddle/ball collision
-    if utils.checkCollision(self.gameObjects.paddle, self.gameObjects.ball) then
+    if utils.isColliding(self.gameObjects.paddle, self.gameObjects.ball) then
         BLOP:play()
         local angle = utils.calculateBounce(self.gameObjects.ball, self.gameObjects.paddle)
         self.gameObjects.ball.dy = angle.dy
@@ -60,8 +59,17 @@ function playState:update(dt)
     --if ball/block collision
     for r, row in ipairs(self.gameObjects.blocks) do
         for c, block in ipairs(row) do
-            if utils.checkCollision(self.gameObjects.ball, block) and block.visible then
+            block:update(dt)
+            if utils.isColliding(self.gameObjects.ball, block) and block.isActive then
                 handleCollision(self.gameObjects.ball, block)
+                
+                
+                block.strength = block.strength - 1
+                if block.strength <= 0 then
+                    block.isActive = false
+                    self.gameObjects.blockCounter = self.gameObjects.blockCounter - 1
+                end
+
                 --play sound
                 local soundInstance = BLIP:clone()
                 soundInstance:play()
@@ -83,9 +91,13 @@ function playState:update(dt)
             -- if no more lives, go back to menu and reset level and everything.
             self.gameObjects.blocks = nil
             self.gameObjects.lives = 3
-            self.gameObjects.score = 0
             gStateMachine:change("menu", self.gameObjects) 
         end
+    end
+
+    --win consequence
+    if self.gameObjects.blockCounter <= 0 then
+        gStateMachine:change("win", self.gameObjects)
     end
 end
 
@@ -103,9 +115,7 @@ function playState:draw()
     self.gameObjects.ball:draw() --ball
     for r, row in ipairs(self.gameObjects.blocks) do --blocks
         for c, block in ipairs(row) do
-            if block.visible then
                 block:draw()
-            end
         end
     end
 end

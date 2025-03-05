@@ -1,17 +1,16 @@
 local love = require "love"
 
 local readyState = {}
-local level1 = {columns = 10, rows = 5, startY = 150}
+
 
 function readyState:enter(gameObjects)
     self.gameObjects = gameObjects
     love.mouse.setVisible(false)
 
-    if not self.gameObjects.blocks then
-        self.gameObjects:levelFactory(level1) -- Instantiate blocks with config table and send the results to blocks object
+    if gameObjects.lives >= 3 then
+        self.gameObjects:levelFactory(self.gameObjects.levels[self.gameObjects.currentLevel]) -- Instantiate blocks with config table and send the results to blocks object
     end
-    
-    print(self.gameObjects.blocks)
+
     utils.resetBall(self.gameObjects.ball)
 end
 
@@ -45,7 +44,7 @@ function readyState:draw()
     self.gameObjects.ball:draw() --ball
     for r, row in ipairs(self.gameObjects.blocks) do --blocks
         for c, block in ipairs(row) do
-            if block.visible then
+            if block.isActive then
                 block:draw()
             end
         end

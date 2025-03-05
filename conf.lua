@@ -12,7 +12,7 @@ function love.conf(t)
     t.window.fullscreen = false
 
     -- Enable or disable vertical sync (vsync)
-    t.window.vsync = 1
+    t.window.vsync = 0
 
     -- Enable or disable resizable window
     t.window.resizable = false

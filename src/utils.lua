@@ -3,7 +3,7 @@ local love = require "love"
 local M = {}
 
 --AABB collision detection
-function M.checkCollision(a, b)
+function M.isColliding(a, b)
     return a.x < b.x + b.w and
            a.x + a.w > b.x and
            a.y < b.y + b.h and

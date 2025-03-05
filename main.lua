@@ -5,6 +5,7 @@ local stateMachine = require("src.stateMachine")
 local playState = require("states.playState")
 local menuState = require("states.menuState")
 local readyState = require("states.readyState")
+local winState = require("states.winState")
 
 local Button = require("modules.button")
 local Ball = require("modules.ball")
@@ -25,10 +26,15 @@ local Block = require("modules.block")
     BLIP:setVolume(0.1)
     BLOP:setVolume(0.1)
 
+    --art
+    local blockImg = love.graphics.newImage("assets/block.png")
+    
 --Game objects
 local gameObjects = {
     score = 0,
     lives = 3,
+    ball = Ball:new(),
+    paddle = Paddle:new(100, 20),
     menu = {
         selected = 1,
         buttons = {
@@ -37,11 +43,17 @@ local gameObjects = {
             Button:new(WINDOW_WIDTH/2, 450, 200, 50, "Py", {0,0,0}, {1,1,1}),
         },
     },
-    ball = Ball:new(),
-    paddle = Paddle:new(100, 20),
+    levels = {
+        {columns = 1, rows = 1, startY = 150, isRandom = false, strength = 1},
+        {columns = 2, rows = 2, startY = 150, isRandom = false, strength = 1},
+        {columns = 10, rows = 5, startY = 150, isRandom = false, strength = 1},
+        {columns = 10, rows = 5, startY = 150, isRandom = true, strength = 1},
+    },
+    currentLevel = 1,
     blocks = nil,
+    blockCounter = 0,
     levelFactory = function(self, level)
-            self.blocks = Block.instantiateBlocks(level) -- Instantiate blocks with config table and send the results to blocks object
+            self.blocks, self.blockCounter = Block.instantiateBlocks(level) -- Instantiate blocks with config table and send the results to blocks object
         end
 }
 
@@ -49,7 +61,8 @@ local gameObjects = {
 gStateMachine = stateMachine:new({
     play = playState,
     menu = menuState,
-    ready = readyState
+    ready = readyState,
+    win = winState
 })
 
 --Love2d functions
@@ -67,6 +80,8 @@ end
 
 function love.draw()
     love.graphics.setColor(1,1,1)
+
+    utils.drawTextCentered(love.timer.getFPS(), H2, WINDOW_HEIGHT*0.9)
     gStateMachine:draw()
 end
 
