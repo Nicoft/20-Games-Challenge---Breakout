@@ -1,5 +1,3 @@
-local love = require "love"
-
 local Paddle = {}
 
 function Paddle:new(w, h)

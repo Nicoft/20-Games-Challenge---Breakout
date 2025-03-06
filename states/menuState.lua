@@ -1,5 +1,3 @@
-local love = require "love"
-
 local menuState = {}
 
 -- functions
@@ -40,7 +38,7 @@ function menuState:update(dt)
 end
 
 function menuState:draw()
-    utils.drawTextCentered("Breakout",H1,WINDOW_HEIGHT*0.1)
+    gUtils.drawTextCentered("Breakout",H1,WINDOW_HEIGHT*0.1)
     if self.buttons then
         for _, button in ipairs(self.buttons) do
             button:draw()
@@ -72,7 +70,7 @@ end
 function menuState:mousemoved(mx, my, dx, dy)
     for i, button in ipairs(self.buttons) do
         --for each button, check if mouse is hovering over it
-        if utils.isMouseHovering(button, mx, my) then
+        if gUtils.isMouseHovering(button, mx, my) then
             --if it is hovering a button, and that button isn't selected, switch it to selected.
             if not self.buttons[i].isSelected then
                 

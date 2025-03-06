@@ -1,8 +1,3 @@
-local love = require "love"
-
-
-
-
 local playState = {}
 
 function playState:enter(gameObjects)
@@ -31,7 +26,7 @@ local collisionActions = {
 }
 
 local function handleCollision(ball, block)
-    local side = utils.getCollisionSide(ball, block)
+    local side = gUtils.getCollisionSide(ball, block)
     if collisionActions[side] then
         collisionActions[side](ball, block)
     end
@@ -47,9 +42,9 @@ function playState:update(dt)
     self.gameObjects.ball:update(dt)
 
     --if paddle/ball collision
-    if utils.isColliding(self.gameObjects.paddle, self.gameObjects.ball) then
+    if gUtils.isColliding(self.gameObjects.paddle, self.gameObjects.ball) then
         BLOP:play()
-        local angle = utils.calculateBounce(self.gameObjects.ball, self.gameObjects.paddle)
+        local angle = gUtils.calculateBounce(self.gameObjects.ball, self.gameObjects.paddle)
         self.gameObjects.ball.dy = angle.dy
         self.gameObjects.ball.dx = angle.dx
         self.gameObjects.ball.y = self.gameObjects.paddle.y - self.gameObjects.ball.h --pop the ball out of the paddle to prevent multiple collisions
@@ -59,14 +54,13 @@ function playState:update(dt)
     --if ball/block collision
     for r, row in ipairs(self.gameObjects.blocks) do
         for c, block in ipairs(row) do
-            block:update(dt)
-            if utils.isColliding(self.gameObjects.ball, block) and block.isActive then
+            if gUtils.isColliding(self.gameObjects.ball, block) and block.isActive then
                 handleCollision(self.gameObjects.ball, block)
                 
                 
                 block.strength = block.strength - 1
                 if block.strength <= 0 then
-                    block.isActive = false
+                    block:destroy() 
                     self.gameObjects.blockCounter = self.gameObjects.blockCounter - 1
                 end
 
@@ -115,7 +109,7 @@ function playState:draw()
     self.gameObjects.ball:draw() --ball
     for r, row in ipairs(self.gameObjects.blocks) do --blocks
         for c, block in ipairs(row) do
-                block:draw()
+            block:draw()
         end
     end
 end

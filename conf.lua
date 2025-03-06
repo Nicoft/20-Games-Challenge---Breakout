@@ -1,5 +1,4 @@
 -- conf.lua
-local love = require "love"
 function love.conf(t)
     -- Set the window title
     t.window.title = "Breakout"

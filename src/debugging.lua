@@ -1,4 +1,3 @@
-local love = require "love"
 local debugging = {}
 
 function debugging.displayDebugInfo(mouse, card)

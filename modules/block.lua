@@ -1,5 +1,3 @@
-local love = require "love"
-
 local blockImg = love.graphics.newImage("assets/block.png")
 local blockImgH = love.graphics.newImage("assets/blockH.png")
 
@@ -15,19 +13,18 @@ function Block:new(x, y, w, h, strength)
         h = h,
         strength = strength,
         isActive = true,
-        deathLimit = 0.05,
-        deathCounter = 0,
+        isDying = false,
 
     }
     setmetatable(block, {__index = Block})
     return block
 end
 
-function Block:death(dt)
-    -- self.deathCounter = self.deathCounter + dt
-    -- if self.deathCounter > self.deathLimit then
-    --     self.isActive = false
-    -- end
+function Block:destroy()
+    self.isDying = true
+    gTimer.after(0.05, function()
+        self.isActive = false
+    end)
 end
 
 function Block:update(dt)
@@ -36,17 +33,18 @@ function Block:update(dt)
             self.deathCounter = self.deathCounter + dt
         end             
     end 
-
 end
 
 -- Drawing function
 function Block:draw()
     -- love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
-    if self.deathCounter <= self.deathLimit then
-        love.graphics.draw(blockImgH, self.x, self.y)
-    end
     if self.isActive then
-        love.graphics.draw(blockImg, self.x, self.y)
+        if self.isDying then
+            love.graphics.draw(blockImgH, self.x, self.y)
+        else
+            love.graphics.draw(blockImg, self.x, self.y)
+        end
+        
     end
 end
 

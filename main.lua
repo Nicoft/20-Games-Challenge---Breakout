@@ -1,6 +1,6 @@
-local love = require "love"
-utils = require "src.utils"
-debugging = require "src.debugging"
+gUtils = require "src.utils"
+gDebugging = require "src.debugging"
+gTimer = require "src.timer"
 local stateMachine = require("src.stateMachine")
 local playState = require("states.playState")
 local menuState = require("states.menuState")
@@ -75,13 +75,14 @@ function love.load ()
 end
 
 function love.update(dt)
+    gTimer.update(dt)
     gStateMachine:update(dt)
 end
 
 function love.draw()
     love.graphics.setColor(1,1,1)
 
-    utils.drawTextCentered(love.timer.getFPS(), H2, WINDOW_HEIGHT*0.9)
+    gUtils.drawTextCentered(love.timer.getFPS(), H2, WINDOW_HEIGHT*0.9)
     gStateMachine:draw()
 end
 

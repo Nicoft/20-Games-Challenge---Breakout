@@ -1,5 +1,3 @@
-local love = require "love"
-
 local winState = {}
 
 local timer = 0
@@ -16,11 +14,6 @@ function winState:enter(gameObjects)
 end
 
 function winState:update(dt)
-    for r, row in ipairs(self.gameObjects.blocks) do
-        for c, block in ipairs(row) do
-            block:update(dt)
-        end
-    end
 
     if self.gameObjects.currentLevel < #self.gameObjects.levels then
         timer = timer + dt
@@ -36,9 +29,9 @@ end
 
 function winState:draw()
     if self.gameObjects.currentLevel < #self.gameObjects.levels then
-        utils.drawTextCentered(winMsg(self.gameObjects.currentLevel), H2, WINDOW_HEIGHT*0.2)
+        gUtils.drawTextCentered(winMsg(self.gameObjects.currentLevel), H2, WINDOW_HEIGHT*0.2)
     else
-        utils.drawTextCentered("You won!", H2, WINDOW_HEIGHT*0.2)
+        gUtils.drawTextCentered("You won!", H2, WINDOW_HEIGHT*0.2)
     end
 
     love.graphics.setFont(H2)
@@ -54,13 +47,13 @@ function winState:draw()
     self.gameObjects.ball:draw() --ball
     for r, row in ipairs(self.gameObjects.blocks) do --blocks
         for c, block in ipairs(row) do
-                block:draw()
+            block:draw()
         end
     end
 end
 
 function winState:keypressed(key)
-    if key == "return" then
+   if key == "return" then
 
    elseif key == "escape" then
         gStateMachine:change("menu", self.gameObjects)
@@ -68,12 +61,11 @@ function winState:keypressed(key)
 end
 
 function winState:mousemoved(mx, my, dx, dy)
+
 end
 
 function winState:mousepressed(x, y, button, istouch, presses)
-    if button == 1 then
 
-    end
 end
 
 return winState

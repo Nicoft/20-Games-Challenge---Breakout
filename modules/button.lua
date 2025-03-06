@@ -1,5 +1,3 @@
-local love = require "love"
-
 local Button = {}
 
 function Button:new(x, y, w, h, text, textColor, buttonColor)

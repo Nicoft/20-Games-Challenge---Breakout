@@ -1,6 +1,3 @@
-local love = require "love"
-
-
 local stateMachine = {}
 
 function stateMachine:new(states)

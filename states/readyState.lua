@@ -1,7 +1,4 @@
-local love = require "love"
-
 local readyState = {}
-
 
 function readyState:enter(gameObjects)
     self.gameObjects = gameObjects
@@ -11,7 +8,7 @@ function readyState:enter(gameObjects)
         self.gameObjects:levelFactory(self.gameObjects.levels[self.gameObjects.currentLevel]) -- Instantiate blocks with config table and send the results to blocks object
     end
 
-    utils.resetBall(self.gameObjects.ball)
+    gUtils.resetBall(self.gameObjects.ball)
 end
 
 function readyState:update(dt)
@@ -29,7 +26,7 @@ function readyState:update(dt)
 end
 
 function readyState:draw()
-    utils.drawTextCentered("Click or press Enter to Play",H2,WINDOW_HEIGHT*0.2)
+    gUtils.drawTextCentered("Click or press Enter to Play",H2,WINDOW_HEIGHT*0.2)
 
     love.graphics.setFont(H2)
     love.graphics.print("Score "..self.gameObjects.score, 50, 50)
@@ -44,9 +41,7 @@ function readyState:draw()
     self.gameObjects.ball:draw() --ball
     for r, row in ipairs(self.gameObjects.blocks) do --blocks
         for c, block in ipairs(row) do
-            if block.isActive then
-                block:draw()
-            end
+            block:draw()
         end
     end
 end

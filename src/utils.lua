@@ -1,5 +1,3 @@
-local love = require "love"
-
 local M = {}
 
 --AABB collision detection
